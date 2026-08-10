@@ -18,6 +18,7 @@ jest.mock('../services/auditService')
 jest.mock('../services/prisonerFinanceService')
 jest.mock('../services/prisonerSearchService')
 jest.mock('../services/prisonRegisterService')
+jest.mock('../services/prisonApiService')
 jest.mock('@ministryofjustice/hmpps-prison-permissions-lib')
 
 describe('PrisonerController', () => {
@@ -27,7 +28,7 @@ describe('PrisonerController', () => {
   const prisonerSearchService = {} as unknown as jest.Mocked<PrisonerSearchService>
   const prisonRegisterService = {} as unknown as jest.Mocked<PrisonRegisterService>
   const prisonPermissionsService = {} as unknown as jest.Mocked<PermissionsService>
-  const prisonApiService = {} as unknown as jest.Mocked<PrisonApiService>
+  const prisonApiService = new PrisonApiService(null) as jest.Mocked<PrisonApiService>
   const featureFlagService = {} as unknown as jest.Mocked<FeatureFlagService>
 
   const prisonerController: PrisonerController = new PrisonerController({
@@ -59,6 +60,15 @@ describe('PrisonerController', () => {
 
   beforeEach(() => {
     jest.resetAllMocks()
+    prisonApiService.getUserCaseloads.mockResolvedValue([
+      {
+        caseLoadId: 'ASI',
+        description: 'Ashfield (HMP)',
+        type: 'INST',
+        caseloadFunction: 'GENERAL',
+        currentlyActive: true,
+      },
+    ])
   })
 
   describe('getFindPrisoner', () => {
@@ -74,7 +84,7 @@ describe('PrisonerController', () => {
         correlationId: mockReq.id,
       })
 
-      expect(mockRes.render).toHaveBeenCalledWith('pages/prisoner/find/find')
+      expect(mockRes.render).toHaveBeenCalledWith('pages/prisoner/find/find', { currentCaseload: 'Ashfield (HMP)' })
       expect(mockNext).not.toHaveBeenCalled()
     })
   })

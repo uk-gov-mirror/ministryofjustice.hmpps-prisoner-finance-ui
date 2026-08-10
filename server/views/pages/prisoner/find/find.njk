@@ -13,12 +13,21 @@
 {% endblock %}
 
 {% block innerContent %}
-  <form method="POST" action="/prisoner" data-testid="find-prisoner-form">
+
+<div>
+
+  <form method="POST" action="/prisoner" data-testid="find-prisoner-form" class="prisoner-search__form" >
     <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+
+    {% set inputHeading %}
+      <h3>Search for a prisoner</h3>
+      <p class="govuk-!-margin-left-2">In {{currentCaseload}}</p>
+      <span>Name or prison number</span>
+    {% endset %}
 
     {{ govukInput({
       label: {
-        text: "Enter a prison number"
+        html: inputHeading
       },
       id: "prisonNumber",
       name: "prisonNumber",
@@ -37,4 +46,7 @@
       }
     }) }}
   </form>
+
+</div>
+
 {% endblock %}

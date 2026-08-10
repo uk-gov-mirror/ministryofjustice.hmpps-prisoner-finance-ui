@@ -9,10 +9,12 @@ import mockPermissions from './testutils/mockPermissions'
 import PrisonRegisterService from '../services/prisonRegisterService'
 import { PrisonerTransactionResponse } from '../interfaces/PrisonerTransactionResponse'
 import { Page } from '../interfaces/Pageable'
+import PrisonApiService from '../services/prisonApiService'
 
 jest.mock('../services/prisonerFinanceService')
 jest.mock('../services/prisonerSearchService')
 jest.mock('../services/prisonRegisterService')
+jest.mock('../services/prisonApiService')
 jest.mock('@ministryofjustice/hmpps-prison-permissions-lib')
 
 const auditService = new AuditService(null) as jest.Mocked<AuditService>
@@ -20,6 +22,7 @@ const prisonerFinanceService = new PrisonerFinanceService(null) as jest.Mocked<P
 const prisonerSearchService = new PrisonerSearchService(null) as jest.Mocked<PrisonerSearchService>
 const prisonPermissionsService = {} as unknown as PermissionsService
 const prisonRegisterService = new PrisonRegisterService(null) as jest.Mocked<PrisonRegisterService>
+const prisonApiService = new PrisonApiService(null) as jest.Mocked<PrisonApiService>
 
 let app: Express
 
@@ -55,6 +58,7 @@ describe('Prisoners', () => {
         prisonPermissionsService,
         prisonerSearchService,
         prisonRegisterService,
+        prisonApiService,
       },
       userSupplier: () => user,
     })
@@ -125,7 +129,13 @@ describe('Prisoners', () => {
     mockPermissions(undefined, { [PrisonerMoneyPermission.read]: false })
 
     app = appWithAllRoutes({
-      services: { auditService, prisonerFinanceService, prisonPermissionsService, prisonerSearchService },
+      services: {
+        auditService,
+        prisonerFinanceService,
+        prisonPermissionsService,
+        prisonerSearchService,
+        prisonApiService,
+      },
       userSupplier: () => user,
     })
 
@@ -138,6 +148,19 @@ describe('Prisoners', () => {
   }
 
   describe('/prisoner', () => {
+    beforeEach(() => {
+      jest.resetAllMocks()
+      prisonApiService.getUserCaseloads.mockResolvedValue([
+        {
+          caseLoadId: 'ASI',
+          description: 'Ashfield (HMP)',
+          type: 'INST',
+          caseloadFunction: 'GENERAL',
+          currentlyActive: true,
+        },
+      ])
+    })
+
     it('GET should return a 200, render the find prisoner page and call the audit service', async () => {
       const response = await request(app).get('/prisoner').expect(200).expect('Content-Type', /html/)
 
@@ -145,7 +168,7 @@ describe('Prisoners', () => {
         AuditPage.FIND_PRISONER,
         expect.objectContaining({ correlationId: expect.any(String), who: user.username }),
       )
-      expect(response.text).toContain('Enter a prison number')
+      expect(response.text).toContain('Search for a prisoner')
     })
 
     it('POST should redirect to the prisoner profile for the entered prison number', async () => {
@@ -242,7 +265,13 @@ describe('Prisoners', () => {
       mockPermissions(undefined, { [PrisonerMoneyPermission.read]: false })
 
       app = appWithAllRoutes({
-        services: { auditService, prisonerFinanceService, prisonPermissionsService, prisonerSearchService },
+        services: {
+          auditService,
+          prisonerFinanceService,
+          prisonPermissionsService,
+          prisonerSearchService,
+          prisonApiService,
+        },
         userSupplier: () => user,
       })
 

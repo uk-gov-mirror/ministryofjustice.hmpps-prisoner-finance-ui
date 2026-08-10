@@ -23,7 +23,9 @@ class PrisonerController {
       correlationId: req.id,
     })
 
-    res.render('pages/prisoner/find/find')
+    const caseloads = await this.services.prisonApiService.getUserCaseloads(req.user?.token as string)
+    const currentCaseload = caseloads.find(caseload => caseload.currentlyActive)
+    res.render('pages/prisoner/find/find', { currentCaseload: currentCaseload.description })
   }
 
   public postFindPrisoner = async (req: Request, res: Response, next: NextFunction) => {
